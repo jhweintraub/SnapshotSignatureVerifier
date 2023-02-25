@@ -49,6 +49,33 @@ contract VerifierTest is Test {
     }
 
     function testSignaturesWithMultipleChoices() public {
+        address expectedSigner = 0x48A9789428F2067338D02B1EF3612DF64F05FeB7;
+        uint32[] memory choices = new uint32[](2);
+        choices[0] = 1;
+        choices[1] = 3;
+ 
+        SignatureVerifier.MultiChoiceVote memory vote = SignatureVerifier.MultiChoiceVote({
+            from: expectedSigner,
+            space: "uniswap",
+            timestamp: 1677339283,
+            proposal: 0xbadf3b39b681c98ba8fb988d5b6c9454ebeb5aae88545a6a852d0734e9f7c957,
+            choice: choices,
+            reason: "",
+            app: "snapshot",
+            metadata: "{}"
+        });
+
+        bytes memory signature = hex"bd9d68b3beb9b063f3df6338be93ea3c21a3752ab9d90a0b53eb0f13dd066f8f42ae7ea8e7d11cf9ae8d8562f88b31ad76f0bb2399dd80b35b79f22dabd0f7131b";
+        
+        bytes32 digest = keccak256(abi.encodePacked(
+            "\x19\x01",
+            verifier.DOMAIN_SEPARATOR(),
+            verifier.hash(vote)
+        ));
+
+        (address signer, ECDSA.RecoverError errorCode) = ECDSA.tryRecover(digest, signature);
+        assertEq(uint(errorCode), 0, "ECDSA Error occured when recovering signer");
+        assertEq(signer, expectedSigner, "actual signer could not be verified as expected");
 
     }
 }
