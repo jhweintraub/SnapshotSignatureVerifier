@@ -9,14 +9,6 @@ import "forge-std/console.sol";
 contract VerifierTest is Test {
     SignatureVerifier public verifier;
 
-    enum RecoverError {
-        NoError,
-        InvalidSignature,
-        InvalidSignatureLength,
-        InvalidSignatureS,
-        InvalidSignatureV // Deprecated in v4.8
-    }
-
     function setUp() public {
         verifier = new SignatureVerifier();
         
@@ -76,6 +68,32 @@ contract VerifierTest is Test {
         (address signer, ECDSA.RecoverError errorCode) = ECDSA.tryRecover(digest, signature);
         assertEq(uint(errorCode), 0, "ECDSA Error occured when recovering signer");
         assertEq(signer, expectedSigner, "actual signer could not be verified as expected");
+    }
 
+    function testSignaturesWithStringChoice() public {
+        address expectedSigner = 0x1205454642ee605B22615Afd801186cAD20495f1;
+ 
+        SignatureVerifier.StringChoiceVote memory vote = SignatureVerifier.StringChoiceVote({
+            from: expectedSigner,
+            space: "frax.eth",
+            timestamp: 1677314421,
+            proposal: 0xe6a925a1fedc1ab3f5349fe0b405c7ed89cc3e720ad7dc26570e8e9245f11e93,
+            choice: "{\"1\":1}",
+            reason: "",
+            app: "snapshot",
+            metadata: "{}"
+        });
+
+        bytes memory signature = hex"18a43db9b11f2e84ebb4cd61e05faf3ec88042d004bee007f21c539fe0fab619468e8d3a6ef64157e584b8bf8d3989bb475c7e413dce16e4166c84ae094ac4fc1c";
+        
+        bytes32 digest = keccak256(abi.encodePacked(
+            "\x19\x01",
+            verifier.DOMAIN_SEPARATOR(),
+            verifier.hash(vote)
+        ));
+
+        (address signer, ECDSA.RecoverError errorCode) = ECDSA.tryRecover(digest, signature);
+        assertEq(uint(errorCode), 0, "ECDSA Error occured when recovering signer");
+        assertEq(signer, expectedSigner, "actual signer could not be verified as expected");
     }
 }

@@ -30,6 +30,17 @@ contract SignatureVerifier {
         string metadata;
     }
 
+    struct StringChoiceVote {
+        address from;
+        string space;
+        uint64 timestamp;
+        bytes32 proposal;
+        string choice;
+        string reason;
+        string app;
+        string metadata;
+    }
+
     bytes32 constant EIP712DOMAIN_TYPEHASH = keccak256(
         "EIP712Domain(string name,string version)"
     );
@@ -41,6 +52,10 @@ contract SignatureVerifier {
 
     bytes32 constant MULTI_CHOICE_VOTE_TYPEHASH = keccak256(
         "Vote(address from,string space,uint64 timestamp,bytes32 proposal,uint32[] choice,string reason,string app,string metadata)"
+    );
+
+    bytes32 constant STRING_CHOICE_VOTE_TYPEHASH = keccak256(
+        "Vote(address from,string space,uint64 timestamp,bytes32 proposal,string choice,string reason,string app,string metadata)"
     );
 
     bytes32 public DOMAIN_SEPARATOR;
@@ -82,6 +97,20 @@ contract SignatureVerifier {
             vote.timestamp,
             vote.proposal,
             keccak256(abi.encodePacked(vote.choice)),
+            keccak256(bytes(vote.reason)),
+            keccak256(bytes(vote.app)),
+            keccak256(bytes(vote.metadata))
+        ));
+    }
+
+    function hash(StringChoiceVote calldata vote) public pure returns (bytes32) {
+        return keccak256(abi.encode(
+            STRING_CHOICE_VOTE_TYPEHASH,
+            vote.from,
+            keccak256(bytes(vote.space)),
+            vote.timestamp,
+            vote.proposal,
+            keccak256(bytes(vote.choice)),
             keccak256(bytes(vote.reason)),
             keccak256(bytes(vote.app)),
             keccak256(bytes(vote.metadata))
