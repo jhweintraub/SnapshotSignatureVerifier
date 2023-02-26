@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+import "openzeppelin/utils/cryptography/ECDSA.sol";
+
 contract SignatureVerifier {
 
     struct EIP712Domain {
@@ -61,13 +63,13 @@ contract SignatureVerifier {
     bytes32 public DOMAIN_SEPARATOR;
 
     constructor() {
-        DOMAIN_SEPARATOR = hash(EIP712Domain({
+        DOMAIN_SEPARATOR = hashEIP712Domain(EIP712Domain({
             name: "snapshot",
             version: "0.1.4"
         }));
     }
 
-    function hash(EIP712Domain memory eip712Domain) public pure returns (bytes32) {
+    function hashEIP712Domain(EIP712Domain memory eip712Domain) public pure returns (bytes32) {
         return keccak256(abi.encode(
             EIP712DOMAIN_TYPEHASH,
             keccak256(bytes(eip712Domain.name)),
@@ -75,7 +77,7 @@ contract SignatureVerifier {
         ));
     }
 
-    function hash(SingleChoiceVote calldata vote) public pure returns (bytes32) {
+    function hashSingleChoiceVote(SingleChoiceVote calldata vote) public pure returns (bytes32) {
         return keccak256(abi.encode(
             SINGLE_CHOICE_VOTE_TYPEHASH,
             vote.from,
@@ -89,7 +91,7 @@ contract SignatureVerifier {
         ));
     }
 
-    function hash(MultiChoiceVote calldata vote) public pure returns (bytes32) {
+    function hashMultiChoiceVote(MultiChoiceVote calldata vote) public pure returns (bytes32) {
         return keccak256(abi.encode(
             MULTI_CHOICE_VOTE_TYPEHASH,
             vote.from,
@@ -103,7 +105,7 @@ contract SignatureVerifier {
         ));
     }
 
-    function hash(StringChoiceVote calldata vote) public pure returns (bytes32) {
+    function hashStringChoiceVote(StringChoiceVote calldata vote) public pure returns (bytes32) {
         return keccak256(abi.encode(
             STRING_CHOICE_VOTE_TYPEHASH,
             vote.from,
@@ -117,4 +119,40 @@ contract SignatureVerifier {
         ));
     }
 
+
+    function verifySingleChoiceSignature(SingleChoiceVote memory vote, bytes calldata signature, address expectedSigner) public view returns (bool) {
+        bytes32 digest = keccak256(abi.encodePacked(
+            "\x19\x01",
+            DOMAIN_SEPARATOR,
+            this.hashSingleChoiceVote(vote)
+        ));
+
+        (address signer,) = ECDSA.tryRecover(digest, signature);
+
+        return (signer == expectedSigner);
+    }
+
+    function verifyMultiChoiceSignature(MultiChoiceVote memory vote, bytes calldata signature, address expectedSigner) public view returns (bool) {
+        bytes32 digest = keccak256(abi.encodePacked(
+            "\x19\x01",
+            DOMAIN_SEPARATOR,
+            this.hashMultiChoiceVote(vote)
+        ));
+
+        (address signer,) = ECDSA.tryRecover(digest, signature);
+
+        return (signer == expectedSigner);
+    }
+
+    function verifyStringChoiceSignature(StringChoiceVote memory vote, bytes calldata signature, address expectedSigner) public view returns (bool) {
+        bytes32 digest = keccak256(abi.encodePacked(
+            "\x19\x01",
+            DOMAIN_SEPARATOR,
+            this.hashStringChoiceVote(vote)
+        ));
+
+        (address signer,) = ECDSA.tryRecover(digest, signature);
+
+        return (signer == expectedSigner);
+    }
 }

@@ -33,7 +33,7 @@ contract VerifierTest is Test {
         bytes32 digest = keccak256(abi.encodePacked(
             "\x19\x01",
             verifier.DOMAIN_SEPARATOR(),
-            verifier.hash(vote)
+            verifier.hashSingleChoiceVote(vote)
         ));
         (address signer, ECDSA.RecoverError errorCode) = ECDSA.tryRecover(digest, signature);
         assertEq(uint(errorCode), 0, "ECDSA Error occured when recovering signer");
@@ -62,7 +62,7 @@ contract VerifierTest is Test {
         bytes32 digest = keccak256(abi.encodePacked(
             "\x19\x01",
             verifier.DOMAIN_SEPARATOR(),
-            verifier.hash(vote)
+            verifier.hashMultiChoiceVote(vote)
         ));
 
         (address signer, ECDSA.RecoverError errorCode) = ECDSA.tryRecover(digest, signature);
@@ -89,7 +89,7 @@ contract VerifierTest is Test {
         bytes32 digest = keccak256(abi.encodePacked(
             "\x19\x01",
             verifier.DOMAIN_SEPARATOR(),
-            verifier.hash(vote)
+            verifier.hashStringChoiceVote(vote)
         ));
 
         (address signer, ECDSA.RecoverError errorCode) = ECDSA.tryRecover(digest, signature);
